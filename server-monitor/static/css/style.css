@@ -236,10 +236,15 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* 指标卡片样式 */
+/* 指标卡片样式 - 统一高度 */
 .metric-card {
   text-align: center;
   padding: 1.5rem;
+  height: 180px; /* 统一卡片高度 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .metric-value {
@@ -247,6 +252,7 @@ body {
   font-weight: 300;
   color: var(--accent-blue);
   margin-bottom: 0.5rem;
+  line-height: 1.2;
 }
 
 .metric-label {
@@ -254,11 +260,40 @@ body {
   font-size: 0.9em;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
 }
 
 .metric-unit {
   font-size: 0.7em;
   color: var(--text-secondary);
+}
+
+/* 运行时间卡片特殊样式 */
+.uptime-card .metric-value {
+  font-size: 1.8em; /* 运行时间文字较小 */
+  color: var(--text-secondary);
+}
+
+.uptime-card .metric-label {
+  font-size: 0.8em;
+}
+
+/* 卡片间距统一 */
+.card {
+  margin-bottom: 20px;
+  height: fit-content;
+  min-height: 180px;
+}
+
+/* 图表卡片高度统一 */
+.chart-card {
+  height: 280px;
+  min-height: 280px;
+}
+
+/* 进程列表卡片 */
+.process-card {
+  min-height: 400px;
 }
 
 /* 响应式设计 */

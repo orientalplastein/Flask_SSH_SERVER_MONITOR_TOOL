@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>服务器监控仪表盘</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
@@ -21,6 +22,12 @@
                 <span class="badge bg-secondary me-2" id="connection-status">本地模式</span>
                 <button class="btn btn-outline-light btn-sm me-2" onclick="refreshData()">
                     <i class="bi bi-arrow-clockwise"></i> 刷新
+                </button>
+                <button class="btn btn-outline-success btn-sm me-2" onclick="startAutoRefresh()" id="startRefreshBtn">
+                    <i class="bi bi-play-circle"></i> 自动刷新
+                </button>
+                <button class="btn btn-outline-warning btn-sm me-2" onclick="stopAutoRefresh()" id="stopRefreshBtn" style="display: none;">
+                    <i class="bi bi-pause-circle"></i> 停止刷新
                 </button>
                 <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#sshModal">
                     <i class="bi bi-server"></i> SSH设置
@@ -62,9 +69,47 @@
             <div class="col-md-3 mb-3">
                 <div class="card border-0 shadow-sm">
                     <div class="card-body text-center">
-                        <i class="bi bi-clock-history fs-1 text-warning"></i>
-                        <h5 class="card-title mt-2 text-secondary">运行时间</h5>
-                        <h6 class="text-muted" id="uptime">00:00:00</h6>
+                        <i class="bi bi-hdd fs-1 text-danger"></i>
+                        <h5 class="card-title mt-2 text-secondary">磁盘使用</h5>
+                        <h2 class="text-danger" id="disk-usage">0%</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-speedometer2 fs-1 text-info"></i>
+                        <h5 class="card-title mt-2 text-secondary">系统负载</h5>
+                        <h6 class="text-info" id="load-average">0.00 0.00 0.00</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm uptime-card">
+                    <div class="card-body text-center metric-card">
+                        <i class="bi bi-clock-history fs-1 text-warning mb-2"></i>
+                        <h5 class="metric-label">运行时间</h5>
+                        <h6 class="metric-value" id="uptime">00:00:00</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-gear fs-1 text-info"></i>
+                        <h5 class="card-title mt-2 text-secondary">服务状态</h5>
+                        <div id="service-status-container" title="ssh: ✅ 运行中\nnginx: ✅ 运行中\nmysql: ✅ 运行中\napache2: ❌ 停止\npostgresql: ❌ 停止\nredis: ❌ 停止\nmongodb: ❌ 停止\ndocker: ❌ 停止\ncron: ✅ 运行中\nsystemd: ✅ 运行中\n">
+                            <span class="badge bg-warning" id="service-status">5/10 运行中</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-activity fs-1 text-primary"></i>
+                        <h5 class="card-title mt-2 text-secondary">网络流量</h5>
+                        <h6 class="text-primary" id="network-traffic">0 KB/s</h6>
                     </div>
                 </div>
             </div>
@@ -108,7 +153,8 @@
                         <thead>
                             <tr>
                                 <th>PID</th>
-                                <th>名称</th>
+                                <th>用户</th>
+                                <th>命令</th>
                                 <th>CPU%</th>
                                 <th>内存(MB)</th>
                                 <th>状态</th>
